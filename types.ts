@@ -27,11 +27,17 @@ export interface BaseItem {
     notes?: string;
 }
 
+export interface SubTask {
+    title: string;
+    completed: boolean;
+}
+
 export interface LearningItem extends BaseItem {
     type: LearningType;
     link: string;
     status: Status;
     difficulty: Difficulty;
+    subTasks: SubTask[];
 }
 
 export interface Project extends BaseItem {
@@ -49,8 +55,10 @@ export interface Problem extends BaseItem {
     link: string;
     status: Status;
     solution?: string;
+    relatedProblemIds?: string[];
 }
 
 export interface Note extends BaseItem {
     content: string;
+    forReview: boolean;
 }

@@ -1,14 +1,14 @@
 
 import React, { useState, useMemo, ChangeEvent } from 'react';
 import { useLearningStore } from '../store/useLearningStore';
-import { LearningItem, Status, Difficulty, LearningType } from '../types';
+import { LearningItem, Status, Difficulty, LearningType, SubTask } from '../types';
 import Modal from '../components/Modal';
 import Tag from '../components/Tag';
 import { STATUS_OPTIONS, DIFFICULTY_OPTIONS, LEARNING_TYPE_OPTIONS, STATUS_COLORS, DIFFICULTY_COLORS } from '../constants';
 import { PlusIcon, EditIcon, DeleteIcon, ExternalLinkIcon } from '../components/icons';
 
 const Learning: React.FC = () => {
-    const { learningItems, addLearningItem, updateLearningItem, deleteLearningItem } = useLearningStore();
+    const { learningItems, addLearningItem, updateLearningItem, deleteLearningItem, toggleSubTask } = useLearningStore();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState<LearningItem | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -69,7 +69,12 @@ const Learning: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredItems.map(item => (
+                {filteredItems.map(item => {
+                    const completedTasks = item.subTasks.filter(t => t.completed).length;
+                    const totalTasks = item.subTasks.length;
+                    const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
+                    return (
                     <div key={item.id} className="bg-card p-5 rounded-lg shadow-lg flex flex-col justify-between space-y-4 border border-border">
                         <div>
                             <div className="flex justify-between items-start">
@@ -86,6 +91,35 @@ const Learning: React.FC = () => {
                             <div className="flex flex-wrap gap-2">
                                 {item.tags.map(tag => <Tag key={tag} colorClasses="bg-gray-500/10 text-text-secondary border-gray-500/20">{tag}</Tag>)}
                             </div>
+                            
+                            {totalTasks > 0 && (
+                                <div className="mt-4 space-y-3">
+                                    <div>
+                                        <div className="flex justify-between items-center mb-1">
+                                            <span className="text-sm font-medium text-text-secondary">Progress</span>
+                                            <span className="text-sm font-medium text-text-primary">{completedTasks} / {totalTasks}</span>
+                                        </div>
+                                        <div className="w-full bg-background rounded-full h-2">
+                                            <div className="bg-primary h-2 rounded-full" style={{ width: `${progress}%` }}></div>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2 max-h-32 overflow-y-auto pr-2">
+                                      {item.subTasks.map((task, index) => (
+                                          <label key={index} htmlFor={`task-${item.id}-${index}`} className="flex items-center cursor-pointer group">
+                                              <input
+                                                  type="checkbox"
+                                                  id={`task-${item.id}-${index}`}
+                                                  checked={task.completed}
+                                                  onChange={() => toggleSubTask(item.id, index)}
+                                                  className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary focus:ring-offset-background focus:ring-1"
+                                              />
+                                              <span className={`ml-3 text-sm font-medium ${task.completed ? 'text-text-secondary line-through' : 'text-text-primary group-hover:text-primary'}`}>{task.title}</span>
+                                          </label>
+                                      ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {item.notes && <p className="text-text-secondary mt-4 bg-background p-3 rounded-md text-sm">{item.notes}</p>}
                         </div>
                         <div className="flex justify-end space-x-2 pt-4 border-t border-border">
@@ -93,7 +127,7 @@ const Learning: React.FC = () => {
                             <button onClick={() => handleDelete(item.id)} className="p-2 text-text-secondary hover:text-red-500"><DeleteIcon className="h-5 w-5" /></button>
                         </div>
                     </div>
-                ))}
+                )})}
             </div>
 
             <Modal isOpen={isModalOpen} onClose={closeModal} title={currentItem ? 'Edit Learning Item' : 'Add Learning Item'}>
@@ -117,6 +151,7 @@ const LearningForm: React.FC<LearningFormProps> = ({ currentItem, onSave, onCanc
         status: currentItem?.status || Status.TODO,
         difficulty: currentItem?.difficulty || Difficulty.EASY,
         tags: currentItem?.tags.join(', ') || '',
+        subTasks: currentItem?.subTasks.map(st => st.title).join('\n') || '',
         notes: currentItem?.notes || '',
     });
 
@@ -127,7 +162,21 @@ const LearningForm: React.FC<LearningFormProps> = ({ currentItem, onSave, onCanc
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave({ ...formData, tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean) });
+        
+        const newSubTaskTitles = formData.subTasks.split('\n').map(t => t.trim()).filter(Boolean);
+        const newSubTasks: SubTask[] = newSubTaskTitles.map(title => {
+            const existingTask = currentItem?.subTasks.find(st => st.title === title);
+            return {
+                title,
+                completed: existingTask ? existingTask.completed : false,
+            };
+        });
+
+        onSave({ 
+            ...formData, 
+            tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
+            subTasks: newSubTasks,
+        });
     };
 
     return (
@@ -138,6 +187,7 @@ const LearningForm: React.FC<LearningFormProps> = ({ currentItem, onSave, onCanc
             <FormSelect name="status" value={formData.status} onChange={handleChange} options={STATUS_OPTIONS} label="Status"/>
             <FormSelect name="difficulty" value={formData.difficulty} onChange={handleChange} options={DIFFICULTY_OPTIONS} label="Difficulty"/>
             <FormInput name="tags" value={formData.tags} onChange={handleChange} placeholder="Tags (comma-separated)"/>
+            <FormTextarea name="subTasks" label="Sub-tasks (one per line)" value={formData.subTasks} onChange={handleChange} placeholder="e.g., Chapter 1: Introduction"/>
             <FormTextarea name="notes" value={formData.notes} onChange={handleChange} placeholder="Notes"/>
             <div className="flex justify-end space-x-4 pt-4">
                 <button type="button" onClick={onCancel} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
@@ -152,8 +202,11 @@ const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = (props)
     <input {...props} className="w-full bg-background text-white rounded-md px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-primary" />
 );
 
-const FormTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>> = (props) => (
-    <textarea {...props} rows={4} className="w-full bg-background text-white rounded-md px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-primary" />
+const FormTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label?: string }> = ({ label, ...props }) => (
+     <div>
+        {label && <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>}
+        <textarea {...props} rows={props.name === 'subTasks' ? 5 : 3} className="w-full bg-background text-white rounded-md px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-primary" />
+    </div>
 );
 
 const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { options: string[], label: string }> = ({ options, label, ...props }) => (

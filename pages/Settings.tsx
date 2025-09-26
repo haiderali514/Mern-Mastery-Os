@@ -4,12 +4,15 @@ import { useLearningStore } from '../store/useLearningStore';
 import { useProjectsStore } from '../store/useProjectsStore';
 import { useProblemsStore } from '../store/useProblemsStore';
 import { useNotesStore } from '../store/useNotesStore';
+import { useProfileStore } from '../store/useProfileStore';
 
 const Settings: React.FC = () => {
     const { learningItems, importData: importLearningData } = useLearningStore.getState();
     const { projects, importData: importProjectsData } = useProjectsStore.getState();
     const { problems, importData: importProblemsData } = useProblemsStore.getState();
     const { notes, importData: importNotesData } = useNotesStore.getState();
+    const { leetcodeUsername, setLeetcodeUsername } = useProfileStore();
+    const [usernameInput, setUsernameInput] = useState(leetcodeUsername);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [feedbackMessage, setFeedbackMessage] = useState<{type: 'success'|'error', text: string} | null>(null);
 
@@ -63,9 +66,25 @@ const Settings: React.FC = () => {
         reader.readAsText(file);
     };
 
+    const handleProfileSave = () => {
+        setLeetcodeUsername(usernameInput);
+        setFeedbackMessage({type: 'success', text: 'LeetCode username saved!'});
+        setTimeout(() => setFeedbackMessage(null), 3000);
+    }
+
     return (
         <div>
             <h1 className="text-3xl font-bold mb-6">Settings</h1>
+            
+            <div className="bg-card p-6 rounded-lg shadow-lg border border-border mb-8">
+                <h2 className="text-xl font-bold mb-4">Platform Integrations</h2>
+                <p className="text-text-secondary mb-4">Connect your profiles to sync your progress automatically.</p>
+                <div className="flex items-center space-x-4">
+                    <input type="text" placeholder="LeetCode Username" value={usernameInput} onChange={(e) => setUsernameInput(e.target.value)} className="w-full md:w-1/3 bg-background text-white rounded-md px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <button onClick={handleProfileSave} className="bg-primary hover:bg-primary-hover text-white font-bold py-2 px-6 rounded-lg transition duration-300">Save</button>
+                </div>
+            </div>
+
             <div className="bg-card p-6 rounded-lg shadow-lg border border-border">
                 <h2 className="text-xl font-bold mb-4">Data Management</h2>
                 <p className="text-text-secondary mb-6">Export all your data into a single JSON file for backup, or import a previously saved file to restore your dashboard.</p>

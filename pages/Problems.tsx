@@ -1,21 +1,24 @@
-
 import React, { useState, useMemo, ChangeEvent } from 'react';
 import { useProblemsStore } from '../store/useProblemsStore';
+import { useProfileStore } from '../store/useProfileStore';
 import { Problem, Status, Difficulty } from '../types';
 import Modal from '../components/Modal';
 import Tag from '../components/Tag';
 import { STATUS_OPTIONS, DIFFICULTY_OPTIONS, STATUS_COLORS, DIFFICULTY_COLORS } from '../constants';
-import { PlusIcon, EditIcon, DeleteIcon, ExternalLinkIcon } from '../components/icons';
+import { PlusIcon, EditIcon, DeleteIcon, ExternalLinkIcon, SyncIcon } from '../components/icons';
 
 const Problems: React.FC = () => {
     const { problems, addProblem, updateProblem, deleteProblem } = useProblemsStore();
+    const { leetcodeUsername } = useProfileStore();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState<Problem | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filters, setFilters] = useState<{ status: string; difficulty: string, platform: string }>({ status: 'All', difficulty: 'All', platform: 'All' });
-    
-    // FIX: Use spread syntax with Set for better type inference. `Array.from` was incorrectly inferring the type as `unknown[]`.
-    const platforms = useMemo(() => ['All', ...new Set(problems.map(p => p.platform))], [problems]);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [syncMessage, setSyncMessage] = useState('');
+
+    // FIX: Explicitly set the generic type for `Set` to `string` to correct a type inference issue.
+    const platforms = useMemo<string[]>(() => ['All', ...new Set<string>(problems.map(p => p.platform))], [problems]);
 
     const openModal = (item: Problem | null = null) => {
         setCurrentItem(item);
@@ -41,6 +44,50 @@ const Problems: React.FC = () => {
             deleteProblem(id);
         }
     };
+    
+    const handleSync = async () => {
+        if (!leetcodeUsername) {
+            setSyncMessage('Please set your LeetCode username in Settings first.');
+            setTimeout(() => setSyncMessage(''), 3000);
+            return;
+        }
+        setIsSyncing(true);
+        setSyncMessage('Syncing...');
+
+        try {
+            const response = await fetch(`https://leetcode-api-faisal.vercel.app/api/${leetcodeUsername}`);
+            if (!response.ok) {
+                throw new Error(`Could not fetch LeetCode data. Status: ${response.status}`);
+            }
+            const data = await response.json();
+            
+            const solvedProblems = data.submissionProgress?.acSolutions?.map((s: any) => s.titleSlug) || [];
+
+            let updatedCount = 0;
+            problems.forEach(problem => {
+                if (problem.platform === 'LeetCode' && problem.status !== Status.DONE) {
+                    const slug = problem.link.split('/').filter(Boolean).pop();
+                    if (slug && solvedProblems.includes(slug)) {
+                        updateProblem({ ...problem, status: Status.DONE });
+                        updatedCount++;
+                    }
+                }
+            });
+            
+            if (updatedCount > 0) {
+                 setSyncMessage(`Sync complete! ${updatedCount} problem(s) updated to 'Done'.`);
+            } else {
+                 setSyncMessage(`Sync complete! Your progress is up-to-date.`);
+            }
+
+        } catch (error) {
+            console.error('LeetCode Sync Error:', error);
+            setSyncMessage(`Error: ${(error as Error).message}. Please check username and try again.`);
+        } finally {
+            setIsSyncing(false);
+            setTimeout(() => setSyncMessage(''), 5000);
+        }
+    };
 
     const filteredItems = useMemo(() => {
         return problems
@@ -58,11 +105,21 @@ const Problems: React.FC = () => {
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold">Coding Problems</h1>
-                <button onClick={() => openModal()} className="bg-primary hover:bg-primary-hover text-white font-bold py-2 px-4 rounded-lg flex items-center space-x-2 transition duration-300">
-                    <PlusIcon className="h-5 w-5" />
-                    <span>Add Problem</span>
-                </button>
+                 <div className="flex items-center space-x-2">
+                    {leetcodeUsername && (
+                        <button onClick={handleSync} disabled={isSyncing} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center space-x-2 transition duration-300 disabled:opacity-50">
+                            <SyncIcon className={`h-5 w-5 ${isSyncing ? 'animate-spin' : ''}`} />
+                            <span>{isSyncing ? 'Syncing...' : 'Sync with LeetCode'}</span>
+                        </button>
+                    )}
+                    <button onClick={() => openModal()} className="bg-primary hover:bg-primary-hover text-white font-bold py-2 px-4 rounded-lg flex items-center space-x-2 transition duration-300">
+                        <PlusIcon className="h-5 w-5" />
+                        <span>Add Problem</span>
+                    </button>
+                </div>
             </div>
+
+            {syncMessage && <div className="mb-4 p-3 rounded-md text-sm bg-blue-500/20 text-blue-300">{syncMessage}</div>}
             
              <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
                 <input type="text" placeholder="Search by title, topic or tag..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="col-span-1 md:col-span-1 bg-card text-white rounded-md px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-primary" />
@@ -72,7 +129,12 @@ const Problems: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredItems.map(item => (
+                {filteredItems.map(item => {
+                     const related = (item.relatedProblemIds || [])
+                        .map(id => problems.find(p => p.id === id))
+                        .filter((p): p is Problem => !!p);
+
+                    return (
                     <div key={item.id} className="bg-card p-5 rounded-lg shadow-lg flex flex-col justify-between space-y-4 border border-border">
                         <div>
                             <div className="flex justify-between items-start">
@@ -89,6 +151,16 @@ const Problems: React.FC = () => {
                             <div className="flex flex-wrap gap-2">
                                 {item.tags.map(tag => <Tag key={tag} colorClasses="bg-gray-500/10 text-text-secondary border-gray-500/20">{tag}</Tag>)}
                             </div>
+                             {related.length > 0 && (
+                                <div className="mt-4">
+                                    <h4 className="text-sm font-semibold text-text-secondary mb-2">Related Problems:</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {related.map(p => (
+                                                <Tag key={p.id} colorClasses="bg-gray-700/20 text-text-secondary border-gray-700/30">{p.title}</Tag>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                             {item.solution && <p className="text-text-secondary mt-4 bg-background p-3 rounded-md text-sm"><strong>Solution:</strong> {item.solution}</p>}
                         </div>
                         <div className="flex justify-end space-x-2 pt-4 border-t border-border">
@@ -96,7 +168,7 @@ const Problems: React.FC = () => {
                             <button onClick={() => handleDelete(item.id)} className="p-2 text-text-secondary hover:text-red-500"><DeleteIcon className="h-5 w-5" /></button>
                         </div>
                     </div>
-                ))}
+                )})}
             </div>
 
             <Modal isOpen={isModalOpen} onClose={closeModal} title={currentItem ? 'Edit Problem' : 'Add Problem'}>
@@ -113,6 +185,7 @@ interface ProblemFormProps {
 }
 
 const ProblemForm: React.FC<ProblemFormProps> = ({ currentItem, onSave, onCancel }) => {
+    const { problems } = useProblemsStore();
     const [formData, setFormData] = useState({
         title: currentItem?.title || '',
         topic: currentItem?.topic || '',
@@ -122,17 +195,25 @@ const ProblemForm: React.FC<ProblemFormProps> = ({ currentItem, onSave, onCancel
         status: currentItem?.status || Status.TODO,
         solution: currentItem?.solution || '',
         tags: currentItem?.tags.join(', ') || '',
+        relatedProblemIds: currentItem?.relatedProblemIds || [],
     });
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
+    
+    const handleMultiSelectChange = (e: ChangeEvent<HTMLSelectElement>) => {
+        const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
+        setFormData(prev => ({ ...prev, relatedProblemIds: selectedIds }));
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSave({ ...formData, tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean) });
     };
+
+    const otherProblems = problems.filter(p => p.id !== currentItem?.id);
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -143,6 +224,22 @@ const ProblemForm: React.FC<ProblemFormProps> = ({ currentItem, onSave, onCancel
             <FormSelect name="status" value={formData.status} onChange={handleChange} options={STATUS_OPTIONS} label="Status" />
             <FormSelect name="difficulty" value={formData.difficulty} onChange={handleChange} options={DIFFICULTY_OPTIONS} label="Difficulty" />
             <FormInput name="tags" value={formData.tags} onChange={handleChange} placeholder="Tags (comma-separated)" />
+
+            <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Related Problems</label>
+                <select
+                    multiple
+                    name="relatedProblemIds"
+                    value={formData.relatedProblemIds}
+                    onChange={handleMultiSelectChange}
+                    className="w-full h-32 bg-background text-white rounded-md px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                    {otherProblems.map(p => (
+                        <option key={p.id} value={p.id}>{p.title}</option>
+                    ))}
+                </select>
+            </div>
+
             <FormTextarea name="solution" value={formData.solution} onChange={handleChange} placeholder="Solution Notes" />
             <div className="flex justify-end space-x-4 pt-4">
                 <button type="button" onClick={onCancel} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>

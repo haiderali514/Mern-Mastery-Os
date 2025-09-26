@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useLearningStore } from '../store/useLearningStore';
 import { useProjectsStore } from '../store/useProjectsStore';
 import { useProblemsStore } from '../store/useProblemsStore';
@@ -9,6 +9,61 @@ import { LearningIcon, ProjectsIcon, ProblemsIcon, NotesIcon, PlusIcon, ChevronD
 import { Link } from 'react-router-dom';
 import Tag from '../components/Tag';
 import { STATUS_COLORS, DIFFICULTY_COLORS } from '../constants';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
+
+const DailyReview: React.FC = () => {
+    const { notes, toggleReviewStatus } = useNotesStore();
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    const notesForReview = useMemo(() => notes.filter(note => note.forReview), [notes]);
+
+    if (notesForReview.length === 0) {
+        return (
+            <div className="bg-card border border-border p-6 rounded-lg text-center mb-8">
+                <h2 className="text-xl font-bold mb-2">Daily Review</h2>
+                <p className="text-text-secondary">You're all caught up! No notes in your review queue. 🎉</p>
+            </div>
+        );
+    }
+    
+    const currentNote = notesForReview[currentIndex];
+
+    const handleNext = () => {
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % notesForReview.length);
+    };
+
+    const handleMarkAsReviewed = () => {
+        toggleReviewStatus(currentNote.id);
+    };
+
+    return (
+        <div className="bg-card border border-border p-6 rounded-lg mb-8 animate-fade-in">
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Daily Review</h2>
+                <p className="text-sm font-medium text-text-secondary">
+                    Reviewing {currentIndex + 1} of {notesForReview.length}
+                </p>
+            </div>
+            <div className="bg-background p-4 rounded-md border border-border max-h-80 overflow-y-auto">
+                <h3 className="text-lg font-bold text-primary mb-2">{currentNote.title}</h3>
+                <div className="markdown-content text-text-primary">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentNote.content}</ReactMarkdown>
+                </div>
+            </div>
+            <div className="flex justify-end space-x-4 mt-4">
+                 <button onClick={handleMarkAsReviewed} className="bg-green-600/80 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg">
+                    Mark as Reviewed
+                </button>
+                <button onClick={handleNext} className="bg-primary hover:bg-primary-hover text-white font-bold py-2 px-4 rounded-lg">
+                    Next
+                </button>
+            </div>
+        </div>
+    );
+};
+
 
 const ItemCard: React.FC<{ item: BaseItem, type: 'learning' | 'project' | 'problem' | 'note' }> = ({ item, type }) => {
     const getIcon = () => {
@@ -63,8 +118,6 @@ const Dashboard: React.FC = () => {
     const { projects } = useProjectsStore();
     const { problems } = useProblemsStore();
     const { notes } = useNotesStore();
-    
-    const allItems = [...learningItems, ...projects, ...problems, ...notes].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return (
         <div className="animate-fade-in">
@@ -77,6 +130,8 @@ const Dashboard: React.FC = () => {
                 </div>
             </div>
             
+            <DailyReview />
+
             <CollapsibleSection title="Learning" count={learningItems.length}>
                 {learningItems.slice(0, 4).map(item => <ItemCard key={item.id} item={item} type="learning"/>)}
             </CollapsibleSection>

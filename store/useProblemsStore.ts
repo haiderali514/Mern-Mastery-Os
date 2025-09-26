@@ -11,9 +11,12 @@ interface ProblemsState {
     importData: (problems: Problem[]) => void;
 }
 
+const problem1Id = 'problem-seed-1';
+const problem2Id = 'problem-seed-2';
+
 const seedData: Problem[] = [
     {
-        id: uuidv4(),
+        id: problem1Id,
         title: 'Two Sum',
         topic: 'Arrays',
         difficulty: Difficulty.EASY,
@@ -22,10 +25,11 @@ const seedData: Problem[] = [
         status: Status.DONE,
         solution: 'Use a hash map to store complements.',
         tags: ['array', 'hashmap'],
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        relatedProblemIds: [problem2Id],
     },
     {
-        id: uuidv4(),
+        id: problem2Id,
         title: 'Longest Substring Without Repeating Characters',
         topic: 'Sliding Window',
         difficulty: Difficulty.MEDIUM,
@@ -33,7 +37,8 @@ const seedData: Problem[] = [
         link: 'https://leetcode.com/problems/longest-substring-without-repeating-characters/',
         status: Status.TODO,
         tags: ['string', 'sliding-window'],
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        relatedProblemIds: [problem1Id],
     }
 ]
 
@@ -43,7 +48,7 @@ export const useProblemsStore = create<ProblemsState>()(
             problems: seedData,
             addProblem: (problem) =>
                 set((state) => ({
-                    problems: [...state.problems, { ...problem, id: uuidv4(), createdAt: new Date().toISOString() }],
+                    problems: [...state.problems, { ...problem, id: uuidv4(), createdAt: new Date().toISOString(), relatedProblemIds: problem.relatedProblemIds || [] }],
                 })),
             updateProblem: (updatedProblem) =>
                 set((state) => ({

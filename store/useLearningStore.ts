@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
@@ -8,6 +9,7 @@ interface LearningState {
     addLearningItem: (item: Omit<LearningItem, 'id' | 'createdAt'>) => void;
     updateLearningItem: (item: LearningItem) => void;
     deleteLearningItem: (id: string) => void;
+    toggleSubTask: (itemId: string, subTaskIndex: number) => void;
     importData: (items: LearningItem[]) => void;
 }
 
@@ -21,7 +23,14 @@ const seedData: LearningItem[] = [
         difficulty: Difficulty.MEDIUM,
         tags: ['react', 'frontend', 'hooks'],
         createdAt: new Date().toISOString(),
-        notes: 'Focus on useEffect and useCallback.'
+        notes: 'Focus on useEffect and useCallback.',
+        subTasks: [
+            { title: 'useState', completed: true },
+            { title: 'useEffect', completed: true },
+            { title: 'useContext', completed: false },
+            { title: 'useReducer', completed: false },
+            { title: 'useCallback', completed: false },
+        ],
     },
      {
         id: uuidv4(),
@@ -32,7 +41,12 @@ const seedData: LearningItem[] = [
         difficulty: Difficulty.HARD,
         tags: ['typescript', 'frontend'],
         createdAt: new Date().toISOString(),
-        notes: 'Explore generics and conditional types.'
+        notes: 'Explore generics and conditional types.',
+        subTasks: [
+            { title: 'Generics', completed: false },
+            { title: 'Conditional Types', completed: false },
+            { title: 'Mapped Types', completed: false },
+        ],
     }
 ];
 
@@ -56,6 +70,20 @@ export const useLearningStore = create<LearningState>()(
             deleteLearningItem: (id) =>
                 set((state) => ({
                     learningItems: state.learningItems.filter((item) => item.id !== id),
+                })),
+            toggleSubTask: (itemId, subTaskIndex) =>
+                set((state) => ({
+                    learningItems: state.learningItems.map((item) => {
+                        if (item.id === itemId) {
+                            const newSubTasks = [...item.subTasks];
+                            newSubTasks[subTaskIndex] = {
+                                ...newSubTasks[subTaskIndex],
+                                completed: !newSubTasks[subTaskIndex].completed,
+                            };
+                            return { ...item, subTasks: newSubTasks };
+                        }
+                        return item;
+                    }),
                 })),
             importData: (items) => set({ learningItems: items }),
         }),
