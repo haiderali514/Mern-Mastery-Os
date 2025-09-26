@@ -8,7 +8,7 @@ interface TagProps {
 
 const Tag: React.FC<TagProps> = ({ children, colorClasses }) => {
     return (
-        <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${colorClasses}`}>
+        <span className={`inline-block px-2.5 py-1 text-xs font-semibold rounded-full border ${colorClasses}`}>
             {children}
         </span>
     );

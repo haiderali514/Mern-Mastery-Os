@@ -54,40 +54,40 @@ const Projects: React.FC = () => {
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold">Projects</h1>
-                <button onClick={() => openModal()} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg flex items-center space-x-2 transition duration-300">
+                <button onClick={() => openModal()} className="bg-primary hover:bg-primary-hover text-white font-bold py-2 px-4 rounded-lg flex items-center space-x-2 transition duration-300">
                     <PlusIcon className="h-5 w-5" />
                     <span>Add Project</span>
                 </button>
             </div>
             
             <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input type="text" placeholder="Search by title or tag..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="col-span-1 md:col-span-1 bg-gray-700 text-white rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                <input type="text" placeholder="Search by title or tag..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="col-span-1 md:col-span-1 bg-card text-white rounded-md px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-primary" />
                 <FilterDropdown value={filters.status} onChange={(e) => setFilters(f => ({...f, status: e.target.value}))} options={['All', ...STATUS_OPTIONS]}/>
                 <FilterDropdown value={filters.difficulty} onChange={(e) => setFilters(f => ({...f, difficulty: e.target.value}))} options={['All', ...DIFFICULTY_OPTIONS]}/>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredItems.map(item => (
-                    <div key={item.id} className="bg-gray-800 p-5 rounded-lg shadow-lg flex flex-col justify-between space-y-4">
+                    <div key={item.id} className="bg-card p-5 rounded-lg shadow-lg flex flex-col justify-between space-y-4 border border-border">
                         <div>
-                            <h2 className="text-xl font-bold text-white mb-2">{item.title}</h2>
-                            <p className="text-gray-400 mb-4 text-sm">{item.description}</p>
+                            <h2 className="text-xl font-bold text-text-primary mb-2">{item.title}</h2>
+                            <p className="text-text-secondary mb-4 text-sm">{item.description}</p>
                             <div className="flex space-x-2 mb-4">
                                 <Tag colorClasses={STATUS_COLORS[item.status]}>{item.status}</Tag>
                                 <Tag colorClasses={DIFFICULTY_COLORS[item.difficulty]}>{item.difficulty}</Tag>
                             </div>
                             <div className="flex flex-wrap gap-2">
-                                {item.tags.map(tag => <Tag key={tag} colorClasses="bg-gray-600/50 text-gray-300">{tag}</Tag>)}
+                                {item.tags.map(tag => <Tag key={tag} colorClasses="bg-gray-500/10 text-text-secondary border-gray-500/20">{tag}</Tag>)}
                             </div>
                             <div className="flex space-x-4 mt-4">
-                                {item.github && <a href={item.github} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 text-gray-400 hover:text-indigo-400"><ExternalLinkIcon className="h-4 w-4" /><span>GitHub</span></a>}
-                                {item.demo && <a href={item.demo} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 text-gray-400 hover:text-indigo-400"><ExternalLinkIcon className="h-4 w-4" /><span>Demo</span></a>}
+                                {item.github && <a href={item.github} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 text-text-secondary hover:text-primary"><ExternalLinkIcon className="h-4 w-4" /><span>GitHub</span></a>}
+                                {item.demo && <a href={item.demo} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 text-text-secondary hover:text-primary"><ExternalLinkIcon className="h-4 w-4" /><span>Demo</span></a>}
                             </div>
-                            {item.notes && <p className="text-gray-300 mt-4 bg-gray-700/50 p-3 rounded-md">{item.notes}</p>}
+                            {item.notes && <p className="text-text-secondary mt-4 bg-background p-3 rounded-md text-sm">{item.notes}</p>}
                         </div>
-                        <div className="flex justify-end space-x-2 pt-4 border-t border-gray-700">
-                            <button onClick={() => openModal(item)} className="p-2 text-gray-400 hover:text-white"><EditIcon className="h-5 w-5" /></button>
-                            <button onClick={() => handleDelete(item.id)} className="p-2 text-gray-400 hover:text-red-500"><DeleteIcon className="h-5 w-5" /></button>
+                        <div className="flex justify-end space-x-2 pt-4 border-t border-border">
+                            <button onClick={() => openModal(item)} className="p-2 text-text-secondary hover:text-white"><EditIcon className="h-5 w-5" /></button>
+                            <button onClick={() => handleDelete(item.id)} className="p-2 text-text-secondary hover:text-red-500"><DeleteIcon className="h-5 w-5" /></button>
                         </div>
                     </div>
                 ))}
@@ -138,34 +138,34 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ currentItem, onSave, onCancel
             <FormInput name="github" value={formData.github} onChange={handleChange} placeholder="GitHub URL" type="url"/>
             <FormInput name="demo" value={formData.demo} onChange={handleChange} placeholder="Demo URL" type="url"/>
             <FormTextarea name="notes" value={formData.notes} onChange={handleChange} placeholder="Notes" />
-            <div className="flex justify-end space-x-4">
+            <div className="flex justify-end space-x-4 pt-4">
                 <button type="button" onClick={onCancel} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
-                <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">Save</button>
+                <button type="submit" className="bg-primary hover:bg-primary-hover text-white font-bold py-2 px-4 rounded-lg">Save</button>
             </div>
         </form>
     );
 };
 
-// Reusable form components from Learning.tsx
+// Reusable form components
 const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = (props) => (
-    <input {...props} className="w-full bg-gray-700 text-white rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+    <input {...props} className="w-full bg-background text-white rounded-md px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-primary" />
 );
 
 const FormTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>> = (props) => (
-    <textarea {...props} rows={3} className="w-full bg-gray-700 text-white rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+    <textarea {...props} rows={3} className="w-full bg-background text-white rounded-md px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-primary" />
 );
 
 const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { options: string[], label: string }> = ({ options, label, ...props }) => (
     <div>
-        <label className="block text-sm font-medium text-gray-400 mb-1">{label}</label>
-        <select {...props} className="w-full bg-gray-700 text-white rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
+        <select {...props} className="w-full bg-background text-white rounded-md px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-primary">
             {options.map(option => <option key={option} value={option}>{option}</option>)}
         </select>
     </div>
 );
 
 const FilterDropdown: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & {options: string[]}> = ({options, ...props}) => (
-    <select {...props} className="bg-gray-700 text-white rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+    <select {...props} className="bg-card text-white rounded-md px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-primary">
         {options.map(o => <option key={o} value={o}>{o}</option>)}
     </select>
 );

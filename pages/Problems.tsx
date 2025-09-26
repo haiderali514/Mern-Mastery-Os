@@ -14,7 +14,7 @@ const Problems: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filters, setFilters] = useState<{ status: string; difficulty: string, platform: string }>({ status: 'All', difficulty: 'All', platform: 'All' });
     
-    // FIX: Use spread syntax with Set to correctly infer the type as string[].
+    // FIX: Use spread syntax with Set for better type inference. `Array.from` was incorrectly inferring the type as `unknown[]`.
     const platforms = useMemo(() => ['All', ...new Set(problems.map(p => p.platform))], [problems]);
 
     const openModal = (item: Problem | null = null) => {
@@ -58,14 +58,14 @@ const Problems: React.FC = () => {
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold">Coding Problems</h1>
-                <button onClick={() => openModal()} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg flex items-center space-x-2 transition duration-300">
+                <button onClick={() => openModal()} className="bg-primary hover:bg-primary-hover text-white font-bold py-2 px-4 rounded-lg flex items-center space-x-2 transition duration-300">
                     <PlusIcon className="h-5 w-5" />
                     <span>Add Problem</span>
                 </button>
             </div>
             
              <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-                <input type="text" placeholder="Search by title, topic or tag..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="col-span-1 md:col-span-1 bg-gray-700 text-white rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                <input type="text" placeholder="Search by title, topic or tag..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="col-span-1 md:col-span-1 bg-card text-white rounded-md px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-primary" />
                 <FilterDropdown value={filters.status} onChange={(e) => setFilters(f => ({...f, status: e.target.value}))} options={['All', ...STATUS_OPTIONS]}/>
                 <FilterDropdown value={filters.difficulty} onChange={(e) => setFilters(f => ({...f, difficulty: e.target.value}))} options={['All', ...DIFFICULTY_OPTIONS]}/>
                 <FilterDropdown value={filters.platform} onChange={(e) => setFilters(f => ({...f, platform: e.target.value}))} options={platforms}/>
@@ -73,27 +73,27 @@ const Problems: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredItems.map(item => (
-                    <div key={item.id} className="bg-gray-800 p-5 rounded-lg shadow-lg flex flex-col justify-between space-y-4">
+                    <div key={item.id} className="bg-card p-5 rounded-lg shadow-lg flex flex-col justify-between space-y-4 border border-border">
                         <div>
                             <div className="flex justify-between items-start">
-                                <h2 className="text-xl font-bold text-white mb-2">{item.title}</h2>
-                                <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-400">
+                                <h2 className="text-xl font-bold text-text-primary mb-2">{item.title}</h2>
+                                <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-text-secondary hover:text-primary">
                                     <ExternalLinkIcon className="h-5 w-5"/>
                                 </a>
                             </div>
-                            <p className="text-sm text-gray-400 mb-2">{item.platform} - {item.topic}</p>
+                            <p className="text-sm text-text-secondary mb-2">{item.platform} - {item.topic}</p>
                             <div className="flex space-x-2 mb-4">
                                 <Tag colorClasses={STATUS_COLORS[item.status]}>{item.status}</Tag>
                                 <Tag colorClasses={DIFFICULTY_COLORS[item.difficulty]}>{item.difficulty}</Tag>
                             </div>
                             <div className="flex flex-wrap gap-2">
-                                {item.tags.map(tag => <Tag key={tag} colorClasses="bg-gray-600/50 text-gray-300">{tag}</Tag>)}
+                                {item.tags.map(tag => <Tag key={tag} colorClasses="bg-gray-500/10 text-text-secondary border-gray-500/20">{tag}</Tag>)}
                             </div>
-                            {item.solution && <p className="text-gray-300 mt-4 bg-gray-700/50 p-3 rounded-md"><strong>Solution:</strong> {item.solution}</p>}
+                            {item.solution && <p className="text-text-secondary mt-4 bg-background p-3 rounded-md text-sm"><strong>Solution:</strong> {item.solution}</p>}
                         </div>
-                        <div className="flex justify-end space-x-2 pt-4 border-t border-gray-700">
-                            <button onClick={() => openModal(item)} className="p-2 text-gray-400 hover:text-white"><EditIcon className="h-5 w-5" /></button>
-                            <button onClick={() => handleDelete(item.id)} className="p-2 text-gray-400 hover:text-red-500"><DeleteIcon className="h-5 w-5" /></button>
+                        <div className="flex justify-end space-x-2 pt-4 border-t border-border">
+                            <button onClick={() => openModal(item)} className="p-2 text-text-secondary hover:text-white"><EditIcon className="h-5 w-5" /></button>
+                            <button onClick={() => handleDelete(item.id)} className="p-2 text-text-secondary hover:text-red-500"><DeleteIcon className="h-5 w-5" /></button>
                         </div>
                     </div>
                 ))}
@@ -144,9 +144,9 @@ const ProblemForm: React.FC<ProblemFormProps> = ({ currentItem, onSave, onCancel
             <FormSelect name="difficulty" value={formData.difficulty} onChange={handleChange} options={DIFFICULTY_OPTIONS} label="Difficulty" />
             <FormInput name="tags" value={formData.tags} onChange={handleChange} placeholder="Tags (comma-separated)" />
             <FormTextarea name="solution" value={formData.solution} onChange={handleChange} placeholder="Solution Notes" />
-            <div className="flex justify-end space-x-4">
+            <div className="flex justify-end space-x-4 pt-4">
                 <button type="button" onClick={onCancel} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
-                <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">Save</button>
+                <button type="submit" className="bg-primary hover:bg-primary-hover text-white font-bold py-2 px-4 rounded-lg">Save</button>
             </div>
         </form>
     );
@@ -154,24 +154,24 @@ const ProblemForm: React.FC<ProblemFormProps> = ({ currentItem, onSave, onCancel
 
 // Reusable form components
 const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = (props) => (
-    <input {...props} className="w-full bg-gray-700 text-white rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+    <input {...props} className="w-full bg-background text-white rounded-md px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-primary" />
 );
 
 const FormTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>> = (props) => (
-    <textarea {...props} rows={3} className="w-full bg-gray-700 text-white rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+    <textarea {...props} rows={3} className="w-full bg-background text-white rounded-md px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-primary" />
 );
 
 const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { options: string[], label: string }> = ({ options, label, ...props }) => (
     <div>
-        <label className="block text-sm font-medium text-gray-400 mb-1">{label}</label>
-        <select {...props} className="w-full bg-gray-700 text-white rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
+        <select {...props} className="w-full bg-background text-white rounded-md px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-primary">
             {options.map(option => <option key={option} value={option}>{option}</option>)}
         </select>
     </div>
 );
 
 const FilterDropdown: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & {options: string[]}> = ({options, ...props}) => (
-    <select {...props} className="bg-gray-700 text-white rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+    <select {...props} className="bg-card text-white rounded-md px-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-primary">
         {options.map(o => <option key={o} value={o}>{o}</option>)}
     </select>
 );

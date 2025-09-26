@@ -66,11 +66,11 @@ const Settings: React.FC = () => {
     return (
         <div>
             <h1 className="text-3xl font-bold mb-6">Settings</h1>
-            <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <div className="bg-card p-6 rounded-lg shadow-lg border border-border">
                 <h2 className="text-xl font-bold mb-4">Data Management</h2>
-                <p className="text-gray-400 mb-6">Export all your data into a single JSON file for backup, or import a previously saved file to restore your dashboard.</p>
+                <p className="text-text-secondary mb-6">Export all your data into a single JSON file for backup, or import a previously saved file to restore your dashboard.</p>
                 <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-                    <button onClick={handleExport} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300">
+                    <button onClick={handleExport} className="bg-primary hover:bg-primary-hover text-white font-bold py-2 px-6 rounded-lg transition duration-300">
                         Export Data
                     </button>
                     <button onClick={() => fileInputRef.current?.click()} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300">

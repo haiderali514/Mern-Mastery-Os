@@ -15,15 +15,15 @@ const App: React.FC = () => {
 
     return (
         <HashRouter>
-            <div className="flex h-screen bg-gray-900 text-gray-100">
+            <div className="flex h-screen bg-background text-text-primary">
                 <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
                 <div className="flex-1 flex flex-col overflow-hidden">
-                    <header className="bg-gray-800 shadow-md lg:hidden p-2 flex justify-end">
-                         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+                    <header className="bg-card shadow-md lg:hidden p-2 flex justify-end z-40 border-b border-border">
+                         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary">
                             {isSidebarOpen ? <XIcon className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
                         </button>
                     </header>
-                    <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-4 sm:p-6 lg:p-8">
+                    <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8">
                         <Routes>
                             <Route path="/" element={<Navigate to="/dashboard" replace />} />
                             <Route path="/dashboard" element={<Dashboard />} />
